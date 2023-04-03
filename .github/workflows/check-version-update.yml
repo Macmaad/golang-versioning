@@ -34,8 +34,7 @@ jobs:
           echo "PAST_VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)" | tee -a $GITHUB_ENV
           echo "NEW_VERSION=$(cat ${{matrix.dir}}/VERSION)" | tee -a $GITHUB_ENV
       - name: check-versions
-        if: steps.filter.outputs.${{matrix.dir}} == 'true'
-        if: ${{ env.NEW_VERSION == env.PAST_VERSION }}
+        if: steps.filter.outputs.${{matrix.dir}} == 'true' && ${{ env.NEW_VERSION == env.PAST_VERSION }}
         uses: actions/github-script@v3
         with:
           script: |
