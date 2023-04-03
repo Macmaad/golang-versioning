@@ -1,0 +1,52 @@
+name: Check Version Upgrade
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    name: Check Version Upgrade
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: filter
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+          filters: |
+            mod_a:
+              - 'mod_a/**'
+            mod_b:
+              - 'mod_b/**'
+
+  check-version:
+    needs: changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_ACCESS_TOKEN }}
+      - name: fetch-tags
+        run: git fetch --prune --unshallow --tags origin
+      - name: fetch-versions
+        run: |
+          echo "PAST_VERSION=$(git describe --tags --abbrev=0 --match '${{matrix.package}}'| cut -c 2-)" | tee -a $GITHUB_ENV
+          echo "NEW_VERSION=$(cat ${{matrix.package}}/VERSION)" | tee -a $GITHUB_ENV
+      - name: check-versions
+        if: ${{ env.NEW_VERSION == env.PAST_VERSION }}
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('expected a version upgrade')
