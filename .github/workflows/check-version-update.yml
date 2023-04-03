@@ -27,7 +27,7 @@ jobs:
               - '${{matrix.dir}}/**'
       - name: fetch-tags-${{ matrix.dir }}
         if: steps.filter.outputs.${{ matrix.dir }} == 'true'
-        run: git fetch --prune --unshallow --tags origin
+        run: echo "this is running"
       # - name: fetch-versions
       #   if: steps.filter.outputs.${{matrix.dir}} == 'true'
       #   run: |
