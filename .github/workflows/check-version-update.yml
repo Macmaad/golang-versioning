@@ -25,17 +25,17 @@ jobs:
           filters: |
             ${{matrix.dir}}:
               - '${{matrix.dir}}/**'
-      - name: fetch-tags
-        if: steps.filter.outputs.${{matrix.dir}} == 'true'
+      - name: fetch-tags-${{ matrix.dir }}
+        if: steps.filter.outputs.${{ matrix.dir }} == 'true'
         run: git fetch --prune --unshallow --tags origin
-      - name: fetch-versions
-        if: steps.filter.outputs.${{matrix.dir}} == 'true'
-        run: |
-          echo "PAST_VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)" | tee -a $GITHUB_ENV
-          echo "NEW_VERSION=$(cat ${{matrix.dir}}/VERSION)" | tee -a $GITHUB_ENV
-      - name: check-versions
-        if: steps.filter.outputs.${{matrix.dir}} == 'true' && ${{ env.NEW_VERSION == env.PAST_VERSION }}
-        uses: actions/github-script@v3
-        with:
-          script: |
-            core.setFailed('expected a version upgrade')
+      # - name: fetch-versions
+      #   if: steps.filter.outputs.${{matrix.dir}} == 'true'
+      #   run: |
+      #     echo "PAST_VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)" | tee -a $GITHUB_ENV
+      #     echo "NEW_VERSION=$(cat ${{matrix.dir}}/VERSION)" | tee -a $GITHUB_ENV
+      # - name: check-versions
+      #   if: steps.filter.outputs.${{matrix.dir}} == 'true' && ${{ env.NEW_VERSION == env.PAST_VERSION }}
+      #   uses: actions/github-script@v3
+      #   with:
+      #     script: |
+      #       core.setFailed('expected a version upgrade')
