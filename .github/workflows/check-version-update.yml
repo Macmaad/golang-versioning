@@ -6,12 +6,11 @@ on:
       - main
 
 jobs:
-  check-version:
-    name: Check Version Upgrade
+  changes:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dir: [mod_a, mod_b]
+    name: Check Version Upgrade
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
@@ -23,19 +22,28 @@ jobs:
         with:
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           filters: |
-            ${{matrix.dir}}:
-              - '${{matrix.dir}}/**'
-      - name: fetch-tags-${{ matrix.dir }}
-        if: steps.filter.outputs.${{ matrix.dir }} == 'true'
+            mod_a:
+              - 'mod_a/**'
+            mod_b:
+              - 'mod_b/**'
+
+  check-version:
+    needs: changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+    steps:
+      - name: fetch-tags
         run: echo "this is running"
-      # - name: fetch-versions
-      #   if: steps.filter.outputs.${{matrix.dir}} == 'true'
-      #   run: |
-      #     echo "PAST_VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)" | tee -a $GITHUB_ENV
-      #     echo "NEW_VERSION=$(cat ${{matrix.dir}}/VERSION)" | tee -a $GITHUB_ENV
-      # - name: check-versions
-      #   if: steps.filter.outputs.${{matrix.dir}} == 'true' && ${{ env.NEW_VERSION == env.PAST_VERSION }}
-      #   uses: actions/github-script@v3
-      #   with:
-      #     script: |
-      #       core.setFailed('expected a version upgrade')
+    # - name: fetch-versions
+    #   if: steps.filter.outputs.${{matrix.dir}} == 'true'
+    #   run: |
+    #     echo "PAST_VERSION=$(git describe --tags --abbrev=0 | cut -c 2-)" | tee -a $GITHUB_ENV
+    #     echo "NEW_VERSION=$(cat ${{matrix.dir}}/VERSION)" | tee -a $GITHUB_ENV
+    # - name: check-versions
+    #   if: steps.filter.outputs.${{matrix.dir}} == 'true' && ${{ env.NEW_VERSION == env.PAST_VERSION }}
+    #   uses: actions/github-script@v3
+    #   with:
+    #     script: |
+    #       core.setFailed('expected a version upgrade')
