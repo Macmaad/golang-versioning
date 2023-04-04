@@ -1,0 +1,29 @@
+name: Detect file changes
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    name: Check Version Upgrade
+    outputs:
+      packages: ${{ steps.filter.outputs.changes }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.token }}
+      - name: filter
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          token: ${{ secrets.token }}
+          filters: |
+            mod_a:
+              - 'mod_a/**'
+            mod_b:
+              - 'mod_b/**'

@@ -1,41 +1,22 @@
-name: Release
+name: Create Tag
 
 on:
-  workflow_run:
-    workflows:
-      - Create Tag
-    types:
-      - completed
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   changes:
-    runs-on: ubuntu-latest
-    name: Check Version Upgrade
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    outputs:
-      packages: ${{ steps.filter.outputs.changes }}
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
-      - name: filter
-        id: filter
-        uses: dorny/paths-filter@v2
-        with:
-          token: ${{ secrets.GH_ACCESS_TOKEN }}
-          filters: |
-            mod_a:
-              - 'mod_a/**'
-            mod_b:
-              - 'mod_b/**'
+    uses: macmaad/golang-versioning/.github/workflows/detect-changes.yml@main
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
 
   release:
-    name: Release
     needs: changes
+    name: Create and Push Tag
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,6 +29,12 @@ jobs:
       - name: version
         run: echo "::set-output name=version::$(cat ${{matrix.package}}/VERSION)"
         id: version
+      - name: tag
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag -a ${{matrix.package}}/v${{ steps.version.outputs.version }} -m ${{matrix.package}}/v${{ steps.version.outputs.version }}
+          git push origin ${{matrix.package}}/v${{ steps.version.outputs.version }}
       - name: release
         uses: softprops/action-gh-release@v1
         with:
