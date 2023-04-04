@@ -5,6 +5,9 @@ on:
     secrets:
       token:
         required: true
+    outputs:
+      packages:
+        value: ${{ jobs.changes.outputs.packages }}
 
 jobs:
   changes:
